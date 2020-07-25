@@ -30,14 +30,16 @@ def make_redirect(actions, params, _name='action'):
             'Save and Close': 'index',
         })
 
-        # in endpoint
-
-        if form.validate_on_submit():
-            product = Product()
-            form.populate_obj(product)
-            db.session.add(product)
-            db.session.commit()
-            return make_redirect(product)
+        @app.route('/create')
+        def create():
+            # ...
+            if form.validate_on_submit():
+                product = Product()
+                form.populate_obj(product)
+                db.session.add(product)
+                db.session.commit()
+                return make_redirect(product)
+            # ...
     """
     endpoint = actions[request.form.get(_name)]
     kwargs = {}
