@@ -1,10 +1,11 @@
 import inspect
 
+from flask.cli import AppGroup
 from werkzeug.utils import find_modules, import_string
 
 
 __all__ = (
-    'register_blueprints', 'register_extensions',
+    'register_blueprints', 'register_commands', 'register_extensions',
 )
 
 
@@ -28,6 +29,27 @@ def register_blueprints(app, import_path):
 
         if hasattr(mod, 'bp') and not getattr(mod.bp, 'BLUEPRINT_DISABLED', False):
             app.register_blueprint(mod.bp)
+
+            for url_prefix in getattr(mod.bp, 'BLUEPRINT_URL_PREFIXES', []):
+                app.register_blueprint(mod.bp, url_prefix=url_prefix)
+
+
+def register_commands(app, import_name):
+    """Initializes console commands found at the specified import path.
+
+    If the __all__ attribute is specified in the module,
+    it will be used to fund commands.
+    Otherwise, the search is performed using the `dir` function.
+
+    Command is an object inherited from `flask.cli.AppGroup`.
+    """
+    m = import_string(get_import_prefix(app) + import_name)
+
+    for name in getattr(m, '__all__', dir(m)):
+        prop = getattr(m, name)
+
+        if isinstance(prop, AppGroup):
+            app.cli.add_command(prop)
 
 
 def register_extensions(app, import_name):
