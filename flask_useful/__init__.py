@@ -15,7 +15,7 @@ def get_import_prefix(app):
     return f'{app.import_name}.'
 
 
-def register_blueprints(app, import_path):
+def register_blueprints(app, import_path, recursive=False):
     """Registers Blueprint for the specified application.
 
     The argument `import_path` must be a valid import name for the package that contains the modules.
@@ -24,7 +24,7 @@ def register_blueprints(app, import_path):
 
     If the `BLUEPRINT_DISABLED` attribute is set in the module, then Blueprint will be ignored.
     """
-    for name in find_modules(get_import_prefix(app) + import_path):
+    for name in find_modules(get_import_prefix(app) + import_path, recursive=recursive):
         mod = import_string(name)
 
         if hasattr(mod, 'bp') and not getattr(mod.bp, 'BLUEPRINT_DISABLED', False):

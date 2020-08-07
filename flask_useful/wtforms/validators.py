@@ -20,7 +20,7 @@ class OnlyOne(object):
             values = [bool(form[i].data) for i in fieldnames]
         except KeyError as err:
             field_name, *_ = err.args
-            raise ValidationError(field.gettext("Invalid field name '%s'.") % field_name)
+            raise StopValidation(field.gettext("Invalid field name '%s'.") % field_name)
 
         only_one = values.count(True) == 1
 
@@ -29,7 +29,7 @@ class OnlyOne(object):
             if message is None:
                 message = field.gettext('It is required to set the value of one of the fields: %(fieldnames)s.')
 
-            raise ValidationError(message % {'fieldnames': ', '.join(fieldnames)})
+            raise StopValidation(message % {'fieldnames': ', '.join(fieldnames)})
 
         if only_one and not field.data:
             raise StopValidation
