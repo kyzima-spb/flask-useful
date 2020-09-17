@@ -18,6 +18,7 @@ setup(
     },
     description='A set of useful tools for the Flask microframework.',
     long_description=readme,
+    url='https://github.com/kyzima-spb/flask-useful',
     license='MIT',
     author='Kirill Vercetti',
     author_email='office@kyzima-spb.com',
