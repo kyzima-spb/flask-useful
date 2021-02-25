@@ -40,9 +40,17 @@ def get_route_param_names(endpoint):
         return {}
 
 
-def make_redirect(actions, params, _name='action'):
+def make_redirect(actions, params, var_name='action'):
     """
     Depending on the button pressed in the form, it creates a 302 redirect.
+
+    Arguments:
+        actions (dict):
+            Mapping action names to endpoint names.
+        params (object):
+            An object whose property values will be used for parameters in the URL rule.
+        var_name (str):
+            The name of the variable whose value is used as the name of the action.
 
     Example:
         from functools import partial
@@ -61,16 +69,29 @@ def make_redirect(actions, params, _name='action'):
                 form.populate_obj(product)
                 db.session.add(product)
                 db.session.commit()
-                return make_redirect(product)
+                return post_redirect(product)
             # ...
     """
-    endpoint = actions[request.form.get(_name)]
-    kwargs = {}
+    endpoint = actions[request.form.get(var_name)]
+    return redirect(make_url(endpoint, params))
+
+
+def make_url(endpoint, params, **kwargs):
+    """
+    Creates the URL of the specified endpoint, using the passed object as rule parameter values.
+
+    Arguments:
+        endpoint (str):
+            the endpoint of the URL (name of the function).
+        params (object):
+            An object whose property values will be used for parameters in the URL rule.
+    """
+    values = {}
 
     for name in get_route_param_names(endpoint):
         if isinstance(params, dict):
-            kwargs[name] = params.get(name)
+            values[name] = params.get(name)
         else:
-            kwargs[name] = getattr(params, name, None)
+            values[name] = getattr(params, name, None)
 
-    return redirect(url_for(endpoint, **kwargs))
+    return url_for(endpoint, **values, **kwargs)
