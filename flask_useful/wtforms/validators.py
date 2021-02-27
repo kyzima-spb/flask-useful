@@ -14,7 +14,7 @@ class OnlyOne(object):
         self.message = message
 
     def __call__(self, form, field):
-        fieldnames = [field.name, *self.fieldnames]
+        fieldnames = [field.short_name, *self.fieldnames]
 
         try:
             values = [bool(form[i].data) for i in fieldnames]
