@@ -67,5 +67,5 @@ def register_extensions(app, import_name):
         prop = getattr(m, name)
         init_app = getattr(prop, 'init_app', None)
 
-        if inspect.ismethod(init_app):
+        if callable(init_app):
             init_app(app)
