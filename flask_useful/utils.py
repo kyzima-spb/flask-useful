@@ -1,12 +1,16 @@
 import re
 from flask import (
-    current_app, redirect, url_for, request
+    current_app,
+    redirect,
+    url_for,
+    request,
+    flash as _flash
 )
 
 
 __all__ = (
     'camel_to_list', 'camel_to_snake', 'snake_to_camel',
-    'get_route_param_names', 'make_redirect',
+    'get_route_param_names', 'make_redirect', 'flash',
 )
 
 
@@ -95,3 +99,26 @@ def make_url(endpoint, params, **kwargs):
             values[name] = getattr(params, name, None)
 
     return url_for(endpoint, **values, **kwargs)
+
+
+class Flash:
+    def __call__(self, message: str, level: str = 'info') -> None:
+        _flash(message, level)
+
+    def debug(self, message: str) -> None:
+        self(message, 'debug')
+
+    def error(self, message: str) -> None:
+        self(message, 'error')
+
+    def info(self, message: str) -> None:
+        self(message, 'info')
+
+    def success(self, message: str) -> None:
+        self(message, 'success')
+
+    def warning(self, message: str) -> None:
+        self(message, 'warning')
+
+
+flash = Flash()
