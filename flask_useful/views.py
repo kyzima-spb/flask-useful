@@ -1,6 +1,10 @@
-from flask import request, url_for, redirect
+from __future__ import annotations
+import typing as t
+
 from flask import views
-from flask import render_template
+from flask import request, url_for, redirect, render_template
+from flask.typing import ResponseReturnValue
+from flask_wtf import FlaskForm
 
 from .utils import camel_to_list, make_url
 
@@ -23,14 +27,14 @@ class FormMixin(object):
     success_endpoint = None
     success_endpoint_map = None
 
-    def get_form(self, *args, **kwargs):
+    def get_form(self, *args: t.Any, **kwargs: t.Any) -> FlaskForm:
         """
         Returns:
             :py:class:`~flask_wtf.FlaskForm`: An instance of the form class.
         """
         return self.get_form_class()(*args, **kwargs)
 
-    def get_form_class(self):
+    def get_form_class(self) -> t.Type[FlaskForm]:
         """
         Returns:
              :py:class:`~flask_wtf.FlaskForm`: A reference to the base class of the form.
@@ -107,7 +111,7 @@ class MethodView(views.MethodView):
         if template_name:
             self.template_name = template_name
 
-    def get_template_name(self):
+    def get_template_name(self) -> t.Union[str, t.List[str]]:
         """
         Returns the name of the template.
 
@@ -125,6 +129,32 @@ class MethodView(views.MethodView):
             self.template_name = '{1}/{0}.html'.format(name.pop(), '_'.join(name))
         return self.template_name
 
-    def render_template(self, **context):
+    def render_template(self, **context: t.Any) -> str:
         """Render a template with passed context."""
         return render_template(self.get_template_name(), **context)
+
+
+class FormView(MethodView, FormMixin):
+    def get_object(self, *args: t.Any, **kwargs: t.Any) -> t.Optional[t.Any]:
+        return None
+
+    def get(self, *args: t.Any, **kwargs: t.Any) -> ResponseReturnValue:
+        obj = self.get_object(*args, **kwargs)
+        return self.render_template(obj=obj, form=self.get_form(obj=obj))
+
+    def post(self, *args: t.Any, **kwargs: t.Any) -> ResponseReturnValue:
+        obj = self.get_object(*args, **kwargs)
+        form = self.get_form(obj=obj)
+
+        if form.validate_on_submit():
+            return self.form_valid(form, obj)
+
+        return self.form_invalid(form, obj)
+
+    def form_invalid(self, form: FlaskForm, obj: t.Any = None) -> ResponseReturnValue:
+        """Runs if errors occurred while processing the form."""
+        return self.render_template(obj=obj, form=form)
+
+    def form_valid(self, form: FlaskForm, obj: t.Any = None) -> ResponseReturnValue:
+        """Runs if the form is processed successfully."""
+        raise NotImplementedError
