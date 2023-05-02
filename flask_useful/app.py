@@ -21,7 +21,7 @@ __all__ = (
 AppOrBp = t.Union[Flask, Blueprint]
 
 
-def get_import_prefix(app: Flask) -> str:
+def get_import_prefix(app: AppOrBp) -> str:
     if app.import_name == '__main__':
         return ''
     return f'{app.import_name}.'
@@ -71,7 +71,7 @@ def register_commands(app: Flask, import_name: str) -> None:
 
     Command is an object inherited from `flask.cli.AppGroup`.
     """
-    m = import_string(get_import_prefix(app) + import_name)
+    m = import_string(get_import_path(app, import_name))
 
     for name in getattr(m, '__all__', dir(m)):
         prop = getattr(m, name)
@@ -89,7 +89,7 @@ def register_extensions(app: Flask, import_name: str) -> None:
 
     An extension is an object that has an init_app method.
     """
-    m = import_string(get_import_prefix(app) + import_name)
+    m = import_string(get_import_path(app, import_name))
 
     for name in getattr(m, '__all__', dir(m)):
         prop = getattr(m, name)

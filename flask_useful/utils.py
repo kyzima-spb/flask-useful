@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import re
+import typing as t
+
 from flask import (
     current_app,
     redirect,
@@ -14,7 +18,7 @@ __all__ = (
 )
 
 
-def camel_to_list(s: str, lower: bool = False) -> list[str]:
+def camel_to_list(s: str, lower: bool = False) -> t.List[str]:
     """Converts a camelcase string to a list."""
     lst = re.findall(r'([A-Z][a-z0-9]+)', s) or [s]
     return [w.lower() for w in lst] if lower else lst
