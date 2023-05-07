@@ -30,6 +30,26 @@ def getattr_or_implement(getter: _F) -> _F:
     return t.cast(_F, wrapper)
 
 
+def setattr_or_implement(setter: _F) -> _F:
+    """
+    Used to set the value of a property in a setter method
+    when the property is not known to exist or not.
+
+    If the property does not exist, the setter method must be implemented.
+
+    The setter method takes only one argument.
+    """
+    @wraps(setter)
+    def wrapper(self: t.Any, value: t.Any) -> None:
+        try:
+            setter(self, value)
+        except AttributeError as err:
+            raise NotImplementedError(
+                f'{err} - override the `{self.__class__.__name__}.{setter.__name__}()` method.'
+            )
+    return t.cast(_F, wrapper)
+
+
 def route(obj, rule, *args, **kwargs):
     """Decorator for the View classes."""
     def decorator(cls):
