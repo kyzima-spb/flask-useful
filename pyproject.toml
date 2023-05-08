@@ -36,15 +36,6 @@ dev = [
 requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-# ...
-# By default, include-package-data is true in pyproject.toml, so you do
-# NOT have to specify this line.
-include-package-data = true
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
 fallback_version = "0.0.0"
