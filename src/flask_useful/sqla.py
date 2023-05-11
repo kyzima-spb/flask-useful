@@ -1,36 +1,63 @@
+from __future__ import annotations
+import typing as t
 import re
 
-from sqlalchemy import exists
+from flask import current_app
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
-def generate_slug(session, slug_field, slug):
+__all__ = (
+    'generate_slug',
+    'get_sqla_session',
+)
+
+
+def generate_slug(
+    slug_field: t.Any,
+    slug: str,
+    session: t.Optional[Session] = None,
+) -> str:
     """
     Generates a unique slug based on the passed value.
 
     Arguments:
-        session: SQLAlchemy session.
         slug_field: Model attribute containing slug.
         slug (str): The desired slug value.
+        session (Session): SQLAlchemy session.
     """
-    if not session.query(exists().where(slug_field == slug)).scalar():
-        return slug
+    if session is None:
+        session = get_sqla_session()
 
-    default = f'{slug}-1'
+    pattern = r'^%s(?:-([0-9]+))?$' % slug
 
-    like = f'{slug}-%'
-    query = session.query(slug_field) \
-                   .filter(slug_field.like(like)) \
-                   .order_by(slug_field.desc())
-    found = [i for i, in query]
+    stmt = (
+        select(slug_field)
+            .where(slug_field.regexp_match(pattern))
+            .order_by(slug_field.desc())
+            .limit(1)
+    )
+    found = session.scalar(stmt)
 
     if not found:
-        return default
+        return slug
 
-    pattern = re.compile(r'^%s-([0-9]+$)' % slug, re.I)
+    match = re.match(pattern, found)
 
-    for i in found:
-        match = pattern.match(i)
-        if match:
-            return '{}-{}'.format(slug, int(match.group(1)) + 1)
+    if match is None:
+        raise AssertionError('The query found one result for the regular expression.')
 
-    return default
+    return '{}-{}'.format(slug, int(match.group(1)) + 1)
+
+
+def get_sqla_session() -> Session:
+    """Returns the current session instance from application context."""
+    ext = current_app.extensions.get('sqlalchemy')
+
+    if ext is None:
+        raise RuntimeError(
+            'An extension named sqlalchemy was not found '
+            'in the list of registered extensions for the current application.'
+        )
+
+    return t.cast(Session, ext.db.session)
