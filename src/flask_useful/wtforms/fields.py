@@ -1,14 +1,14 @@
-from werkzeug.datastructures import FileStorage
 from wtforms import fields
 from wtforms import widgets
 from wtforms.compat import text_type
 from wtforms.validators import StopValidation
+
 from .widgets import CheckboxGroup
 
 
 __all__ = (
     'CheckboxGroupField', 'RadioBoxField',
-    'FileField', 'ValueListField',
+    'ValueListField',
 )
 
 
@@ -21,38 +21,6 @@ class CheckboxGroupField(fields.SelectMultipleField):
     """
     widget = CheckboxGroup(inline=True)
     option_widget = widgets.CheckboxInput()
-
-
-class FileField(fields.FileField):
-    """
-    A file selection field with a save method that the Flask-Upload package uses to save.
-
-    Attributes:
-        label (str):
-        upload_set:
-    """
-
-    def __init__(self, label=None, upload_set=None, **kwargs):
-        super().__init__(label, **kwargs)
-        self.upload_set = upload_set
-        self.file = None
-
-    def process_formdata(self, valuelist):
-        if valuelist:
-            file_storage = valuelist[0]
-
-            if file_storage.filename != '':
-                self.file = file_storage
-                self.data = ''
-
-    def pre_validate(self, form):
-        if self.data and (not self.raw_data or not self.raw_data[0]):
-            raise StopValidation
-
-    def save(self, **kwargs):
-        if self.file is not None:
-            self.data = self.upload_set.save(self.file, **kwargs)
-        return self.data
 
 
 class RadioBoxField(fields.SelectField):
