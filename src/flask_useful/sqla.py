@@ -3,14 +3,19 @@ import typing as t
 import re
 
 from flask import current_app
-from sqlalchemy import select
+import sqlalchemy as sa
 from sqlalchemy.orm import Session
 from werkzeug.local import LocalProxy
+
+
+IdentityArgument = t.Union[t.Any, t.Tuple[t.Any, ...], t.Dict[str, t.Any]]
 
 
 __all__ = (
     'generate_slug',
     'get_sqla_session',
+    'normalize_pk',
+    'sqla_session',
 )
 
 
@@ -39,7 +44,7 @@ def generate_slug(
     pattern = r'^%s(?:-([0-9]+))?$' % slug
 
     stmt = (
-        select(slug_field)
+        sa.select(slug_field)
             .where(slug_field.regexp_match(pattern))
             .order_by(slug_field.desc())
             .limit(1)
@@ -68,3 +73,23 @@ def get_sqla_session() -> Session:
         )
 
     return t.cast(Session, ext.db.session)
+
+
+def normalize_pk(
+    value: IdentityArgument,
+    model_class: t.Type[t.Any],
+) -> t.Dict[str, t.Any]:
+    """Returns the primary key with a cast as a dictionary."""
+    columns = tuple(
+        c for c in sa.inspect(model_class).columns if c.primary_key
+    )
+
+    if not isinstance(value, tuple):
+        if isinstance(value, dict):
+            value = tuple(value[c.name] for c in columns)
+        else:
+            value = (value,)
+
+    return {
+        c.name: c.type.python_type(v) for c, v in zip(columns, value)
+    }
