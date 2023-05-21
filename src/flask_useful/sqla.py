@@ -5,11 +5,18 @@ import re
 from flask import current_app
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from werkzeug.local import LocalProxy
 
 
 __all__ = (
     'generate_slug',
     'get_sqla_session',
+)
+
+
+sqla_session = t.cast(
+    Session,
+    LocalProxy(lambda: get_sqla_session()),
 )
 
 
