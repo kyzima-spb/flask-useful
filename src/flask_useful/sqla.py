@@ -1,4 +1,5 @@
 from __future__ import annotations
+from types import TracebackType
 import typing as t
 import re
 
@@ -93,3 +94,27 @@ def normalize_pk(
     return {
         c.name: c.type.python_type(v) for c, v in zip(columns, value)
     }
+
+
+class SessionMixin:
+    """
+    The mixin adds a property with the current session
+    and an auto-commit context manager.
+    """
+
+    def __enter__(self) -> Session:
+        return self.session
+
+    def __exit__(
+        self,
+        err_type: t.Optional[t.Type[BaseException]],
+        err: t.Optional[BaseException],
+        traceback: t.Optional[TracebackType]
+    ) -> t.Optional[bool]:
+        if err is None:
+            self.session.commit()
+        return None
+
+    @property
+    def session(self) -> Session:
+        return sqla_session
