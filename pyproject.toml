@@ -44,3 +44,4 @@ fallback_version = "0.0.0"
 files = ["src/flask_useful"]
 python_version = "3.7"
 strict = true
+disallow_subclassing_any = false

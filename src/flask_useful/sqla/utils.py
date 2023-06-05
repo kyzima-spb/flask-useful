@@ -3,15 +3,20 @@ import typing as t
 import re
 
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
 
 from .session import sqla_session
+
+if t.TYPE_CHECKING:
+    from sqlalchemy import Column
+    from sqlalchemy.orm import Session
+
 
 IdentityArgument = t.Union[t.Any, t.Tuple[t.Any, ...], t.Dict[str, t.Any]]
 
 
 __all__ = (
     'generate_slug',
+    'get_primary_columns',
     'normalize_pk',
 )
 
@@ -36,9 +41,9 @@ def generate_slug(
 
     stmt = (
         sa.select(slug_field)
-            .where(slug_field.regexp_match(pattern))
-            .order_by(slug_field.desc())
-            .limit(1)
+          .where(slug_field.regexp_match(pattern))
+          .order_by(slug_field.desc())
+          .limit(1)
     )
     found = session.scalar(stmt)
 
@@ -53,14 +58,21 @@ def generate_slug(
     return '{}-{}'.format(slug, int(match.group(1)) + 1)
 
 
+def get_primary_columns(
+    model_class: t.Type[t.Any],
+) -> t.Tuple[Column[t.Any], ...]:
+    """Returns the primary key columns."""
+    return tuple(
+        c for c in sa.inspect(model_class).columns if c.primary_key
+    )
+
+
 def normalize_pk(
     value: IdentityArgument,
     model_class: t.Type[t.Any],
 ) -> t.Dict[str, t.Any]:
     """Returns the primary key with a cast as a dictionary."""
-    columns = tuple(
-        c for c in sa.inspect(model_class).columns if c.primary_key
-    )
+    columns = get_primary_columns(model_class)
 
     if not isinstance(value, tuple):
         if isinstance(value, dict):
