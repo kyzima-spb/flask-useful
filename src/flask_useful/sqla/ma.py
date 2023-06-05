@@ -13,11 +13,17 @@ from .utils import get_primary_columns
 
 __all__ = (
     'ExistsEntity',
+    'UniqueEntity',
 )
 
 
 class ExistsEntity(Validator):
     """The validator checks that an entity exists."""
+
+    default_error_messages = {
+        'invalid': 'An instance with %(name)s=%(value)s does not exist.',
+        'plural': 'An instance with %(attrs)s attributes does not exist.',
+    }
 
     def __init__(
         self,
@@ -43,26 +49,41 @@ class ExistsEntity(Validator):
         self.error = error
 
     def __call__(self, *values: t.Any) -> None:
-        criteria = tuple(c == v for c, v in zip(self.columns, values))
-        result = sqla_session.scalar(
-            select(1).where(*criteria)
-        )
-        if not result:
+        if not self._validate(*values):
             if len(values) == 1:
                 raise self.make_error(
-                    'An instance with %(name)s=%(value)s does not exist.',
+                    'invalid',
                     name=self.columns[0].name,
                     value=values[0],
                 )
             else:
                 raise self.make_error(
-                    'An instance with %(attrs)s attributes does not exist.',
+                    'plural',
                     attrs=', '.join(
                         f'{c.name}={v}' for c, v in zip(self.columns, values)
                     )
                 )
 
-    def make_error(self, message: str, **kwargs: str) -> ValidationError:
-        if self.error:
-            message = self.error
+    def _validate(self, *values: t.Any) -> bool:
+        criteria = tuple(c == v for c, v in zip(self.columns, values))
+        return bool(sqla_session.scalar(
+            select(1).where(*criteria)
+        ))
+
+    def make_error(self, key: str, **kwargs: str) -> ValidationError:
+        message = self.error or self.default_error_messages[key]
         return ValidationError(message % kwargs)
+
+
+class UniqueEntity(ExistsEntity):
+    """
+    The validator checks the attributes of an entity for uniqueness.
+    """
+
+    default_error_messages = {
+        'invalid': 'An instance with %(name)s=%(value)s already exists.',
+        'plural': 'An instance with unique %(attrs)s attributes already exists.',
+    }
+
+    def _validate(self, *values: t.Any) -> bool:
+        return not super()._validate(*values)
