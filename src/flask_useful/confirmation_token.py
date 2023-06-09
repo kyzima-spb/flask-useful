@@ -78,12 +78,13 @@ class ConfirmationToken(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def find_user_tokens(self, user: t.Any) -> t.List[TokenProtocol]:
+    def find_user_tokens(self, user: t.Any) -> t.Sequence[TokenProtocol]:
         """Returns all tokens owned by the given user."""
         raise NotImplementedError
 
     def generate_token(
         self,
+        user: t.Any,
         *,
         max_age: int = 0,
         **generator_kwargs: t.Dict[str, t.Any],
@@ -100,6 +101,7 @@ class ConfirmationToken(metaclass=ABCMeta):
                 found = False
 
         self.save_token({
+            'user': user,
             'value': hashed_token,
             'issued': int(time.time()),
             'max_age': max_age,
@@ -151,6 +153,7 @@ class ConfirmationToken(metaclass=ABCMeta):
                 raise TokenExpired
 
         try:
+            # Выполняем действие для найденного пользователя.
             yield token
         except Exception:
             raise

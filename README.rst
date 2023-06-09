@@ -31,7 +31,7 @@ Install the latest stable version by running the command::
    :target: https://pepy.tech/project/flask-useful
 
 .. |DOWNLOADS_M| image:: https://pepy.tech/badge/flask-useful/month
-   :target: https://pepy.tech/project/flask-useful)
+   :target: https://pepy.tech/project/flask-useful
 
 .. |DOWNLOADS_W| image:: https://pepy.tech/badge/flask-useful/week
-   :target: https://pepy.tech/project/flask-useful)
+   :target: https://pepy.tech/project/flask-useful

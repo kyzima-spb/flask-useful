@@ -1,3 +1,4 @@
+from .confirmation_token import *
 from .session import *
 from .utils import *
 
@@ -8,5 +9,7 @@ __all__ = (
     'get_sqla_session',
     'normalize_pk',
     'sqla_session',
+    'ConfirmationToken',
+    'ConfirmationTokenSerializer',
     'SessionMixin',
 )
