@@ -11,5 +11,4 @@ __all__ = (
     'sqla_session',
     'ConfirmationToken',
     'ConfirmationTokenSerializer',
-    'SessionMixin',
 )

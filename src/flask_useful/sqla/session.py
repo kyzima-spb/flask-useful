@@ -1,5 +1,5 @@
 from __future__ import annotations
-from types import TracebackType
+from contextlib import contextmanager
 import typing as t
 
 from flask import current_app
@@ -10,14 +10,17 @@ from werkzeug.local import LocalProxy
 __all__ = (
     'get_sqla_session',
     'sqla_session',
-    'SessionMixin',
 )
 
 
-sqla_session = t.cast(
-    Session,
-    LocalProxy(lambda: get_sqla_session()),
-)
+class SupportsAutocommit(t.Protocol):
+    @property
+    @contextmanager
+    def autocommit(self) -> t.Iterator[Session]: ...
+
+
+class SessionProxyType(Session, SupportsAutocommit):
+    ...
 
 
 def get_sqla_session() -> Session:
@@ -33,25 +36,24 @@ def get_sqla_session() -> Session:
     return t.cast(Session, ext.db.session)
 
 
-class SessionMixin:
-    """
-    The mixin adds a property with the current session
-    and an auto-commit context manager.
-    """
-
-    def __enter__(self) -> Session:
-        return self.session
-
-    def __exit__(
-        self,
-        err_type: t.Optional[t.Type[BaseException]],
-        err: t.Optional[BaseException],
-        traceback: t.Optional[TracebackType]
-    ) -> t.Optional[bool]:
-        if err is None:
-            self.session.commit()
-        return None
+class SessionProxy(SupportsAutocommit, LocalProxy[Session]):
+    def __init__(self) -> None:
+        super().__init__(lambda: get_sqla_session())
 
     @property
-    def session(self) -> Session:
-        return sqla_session
+    @contextmanager
+    def autocommit(self) -> t.Iterator[Session]:
+        """
+        Returns the current session as the value of the context manager.
+
+        If successful, commits the changes.
+        """
+        try:
+            yield self._get_current_object()
+        except Exception:
+            raise
+        else:
+            self._get_current_object().commit()
+
+
+sqla_session = t.cast(SessionProxyType, SessionProxy())
