@@ -36,7 +36,7 @@ def get_sqla_session() -> Session:
     return t.cast(Session, ext.db.session)
 
 
-class SessionProxy(SupportsAutocommit, LocalProxy[Session]):
+class SessionProxy(LocalProxy[Session]):
     def __init__(self) -> None:
         super().__init__(lambda: get_sqla_session())
 

@@ -1,10 +1,8 @@
 from __future__ import annotations
 import typing as t
 
-from marshmallow.validate import (
-    Validator,
-    ValidationError,
-)
+from marshmallow.exceptions import ValidationError
+from marshmallow.validate import Validator
 from sqlalchemy import inspect, select
 
 from .session import sqla_session
