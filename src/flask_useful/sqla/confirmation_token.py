@@ -23,20 +23,19 @@ class SQLATokenMixin:
 
     def delete_user_tokens(self, user: t.Any) -> None:
         model = self.get_model_class()
-        sqla_session.execute(
+        self.session.execute(
             delete(model).where(model.user == user)
         )
-        sqla_session.commit()
 
     def find_token(self, value: str) -> t.Optional[TokenProtocol]:
         model = self.get_model_class()
-        return sqla_session.scalar(
+        return self.session.scalar(
             select(model).where(model.value == value)
         )
 
     def find_user_tokens(self, user: t.Any) -> t.Sequence[TokenProtocol]:
         model = self.get_model_class()
-        return sqla_session.scalars(
+        return self.session.scalars(
             select(model).where(model.user == user)
                          .with_for_update()
         ).all()
@@ -47,8 +46,11 @@ class SQLATokenMixin:
 
     def save_token(self, token_dict: t.Dict[str, t.Any]) -> None:
         token = self.get_model_class()(**token_dict)
-        sqla_session.add(token)
-        sqla_session.commit()
+        self.session.add(token)
+
+    @property
+    def session(self):
+        return sqla_session
 
 
 class ConfirmationToken(SQLATokenMixin, _ConfirmationToken):
