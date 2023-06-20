@@ -14,7 +14,6 @@ __all__ = (
 
 
 class SupportsAutocommit(t.Protocol):
-    @property
     @contextmanager
     def autocommit(self) -> t.Iterator[Session]: ...
 
@@ -40,9 +39,8 @@ class SessionProxy(LocalProxy[Session]):
     def __init__(self) -> None:
         super().__init__(lambda: get_sqla_session())
 
-    @property
     @contextmanager
-    def autocommit(self) -> t.Iterator[Session]:
+    def autocommit(self, rollback: bool = False) -> t.Iterator[Session]:
         """
         Returns the current session as the value of the context manager.
 
@@ -50,10 +48,11 @@ class SessionProxy(LocalProxy[Session]):
         """
         try:
             yield self._get_current_object()
-        except Exception:
-            raise
-        else:
             self._get_current_object().commit()
+            rollback = False
+        finally:
+            if rollback:
+                self._get_current_object().rollback()
 
 
 sqla_session = t.cast(SessionProxyType, SessionProxy())
