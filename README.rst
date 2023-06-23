@@ -15,6 +15,17 @@ Install the latest stable version by running the command::
     pip install Flask-Useful
 
 
+Alembic
+-------
+
+Update alembic's ``env.py`` to register a operation plugins:
+
+.. code-block:: python
+
+    # migrations/env.py
+    import flask_useful.alembic
+
+
 .. |PyPI| image:: https://img.shields.io/pypi/v/flask-useful.svg
    :target: https://pypi.org/project/flask-useful/
    :alt: Latest Version

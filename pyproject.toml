@@ -45,3 +45,9 @@ files = ["src/flask_useful"]
 python_version = "3.7"
 strict = true
 disallow_subclassing_any = false
+
+[[tool.mypy.overrides]]
+module = [
+    "sqlalchemy_utils.*",
+]
+ignore_missing_imports = true
