@@ -51,6 +51,12 @@ class Choice(click.Choice):
         result = super().convert(value, param, ctx)
         return self.choices_map[result]
 
+    def get_missing_message(self, param: click.Parameter) -> str:
+        try:
+            return super().get_missing_message(param)
+        except RuntimeError:
+            return ''
+
     def make_key(self, value: t.Any) -> str:
         if self.field_name is None:
             return str(value)
