@@ -19,10 +19,15 @@ class Blueprint(_Blueprint):
         view_func: t.Optional[RouteCallable] = None,
         provide_automatic_options: t.Optional[bool] = None,
         *,
-        view_kwargs: t.Dict[str, t.Any] = None,
+        view_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
         **options: t.Any,
     ) -> None:
         if endpoint is None:
+            if view_func is None:
+                raise ValueError(
+                    'It is not possible to generate the endpoint name'
+                    ' because view_func argument is not specified.'
+                )
             endpoint = camel_to_snake(view_func.__name__)
 
         if isinstance(view_func, type):
