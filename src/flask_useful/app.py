@@ -3,7 +3,8 @@ The module contains functions for automating the configuration of the applicatio
 """
 
 from __future__ import annotations
-
+from contextlib import closing
+import pathlib
 import typing as t
 
 from flask import Blueprint, Flask
@@ -12,6 +13,7 @@ from werkzeug.utils import find_modules, import_string
 
 
 __all__ = (
+    'config_from_secrets_env',
     'register_blueprints',
     'register_commands',
     'register_extensions',
@@ -19,6 +21,20 @@ __all__ = (
 
 
 AppOrBp = t.Union[Flask, Blueprint]
+
+
+def config_from_secrets_env(app: Flask, prefix: str = 'SECRET') -> None:
+    """
+    Loads configuration parameter values from Docker secrets.
+
+    Paths to secret files are passed through any environment variables
+    that start with SECRET_,
+    dropping the prefix from the env key for the config key.
+    """
+    app.config.from_prefixed_env(
+        prefix=prefix,
+        loads=lambda p: pathlib.Path(p).read_text()
+    )
 
 
 def get_import_prefix(app: AppOrBp) -> str:
