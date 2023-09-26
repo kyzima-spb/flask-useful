@@ -3,9 +3,11 @@ import typing as t
 
 from flask import Blueprint as _Blueprint
 from flask.views import View
-from flask.typing import RouteCallable
 
 from .utils import camel_to_snake
+
+if t.TYPE_CHECKING:
+    from flask.typing import RouteCallable
 
 
 __all__ = ('Blueprint',)

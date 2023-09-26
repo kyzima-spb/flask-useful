@@ -3,7 +3,6 @@ The module contains functions for automating the configuration of the applicatio
 """
 
 from __future__ import annotations
-from contextlib import closing
 import pathlib
 import typing as t
 
