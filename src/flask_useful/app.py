@@ -3,6 +3,9 @@ The module contains functions for automating the configuration of the applicatio
 """
 
 from __future__ import annotations
+from contextlib import suppress
+import json
+import os
 import pathlib
 import typing as t
 
@@ -12,6 +15,7 @@ from werkzeug.utils import find_modules, import_string
 
 
 __all__ = (
+    'config_from_prefixed_env',
     'config_from_secrets_env',
     'register_blueprints',
     'register_commands',
@@ -22,6 +26,38 @@ __all__ = (
 AppOrBp = t.Union[Flask, Blueprint]
 
 
+def config_from_prefixed_env(
+    app: Flask, prefix: str = 'FLASK', *, loads: t.Callable[[str], t.Any] = json.loads,
+) -> bool:
+    """
+    For backward compatibility with Flask < 2.1.
+    Documentation: https://flask.palletsprojects.com/en/2.3.x/api/
+    """
+    if hasattr(app.config, 'from_prefixed_env'):
+        return app.config.from_prefixed_env(prefix, loads=loads)
+
+    prefix = '%s_' % prefix
+    prefix_len = len(prefix)
+
+    for key in filter(lambda k: k.startswith(prefix), os.environ):
+        value = os.environ[key]
+
+        with suppress(Exception):
+            value = loads(value)
+
+        key = key[prefix_len:]
+        current = app.config
+        *parent_keys, key = key.split('__')
+
+        for parent in parent_keys:
+            current.setdefault(parent, {})
+            current = current[parent]
+
+        current[key] = value
+
+    return True
+
+
 def config_from_secrets_env(app: Flask, prefix: str = 'SECRET') -> None:
     """
     Loads configuration parameter values from Docker secrets.
@@ -30,7 +66,8 @@ def config_from_secrets_env(app: Flask, prefix: str = 'SECRET') -> None:
     that start with SECRET_,
     dropping the prefix from the env key for the config key.
     """
-    app.config.from_prefixed_env(
+    config_from_prefixed_env(
+        app=app,
         prefix=prefix,
         loads=lambda p: pathlib.Path(p).read_text()
     )
