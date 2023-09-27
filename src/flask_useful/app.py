@@ -66,11 +66,16 @@ def config_from_secrets_env(app: Flask, prefix: str = 'SECRET') -> None:
     that start with SECRET_,
     dropping the prefix from the env key for the config key.
     """
-    config_from_prefixed_env(
-        app=app,
-        prefix=prefix,
-        loads=lambda p: pathlib.Path(p).read_text()
-    )
+    def loads(path: str) -> t.Any:
+        path, *key = path.rsplit('|', maxsplit=1)
+        value = pathlib.Path(path).read_text()
+
+        if not key:
+            return value
+
+        return json.loads(value).__getitem__(key[0])
+
+    config_from_prefixed_env(app=app, prefix=prefix, loads=loads)
 
 
 def get_import_prefix(app: AppOrBp) -> str:
